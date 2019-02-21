@@ -38,7 +38,7 @@ export default {
     base() {
       if (process.env.NODE_ENV === "development")
         return "http://localhost:8010/proxy";
-      return "/proxy";
+      return "/untappd";
     }
   },
   methods: {
