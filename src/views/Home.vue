@@ -1,36 +1,37 @@
 <template>
-  <div class="home">
-    <h1>{{ users[0].name }}: {{ users[0].count }}</h1>
-    <h1>{{ users[1].name }}: {{ users[1].count }}</h1>
-  </div>
+  <v-layout flex justify-space-around wrap>
+    <v-flex xs4 pa-2 v-for="user in users" :key="user.name">
+      <user-card
+        :user="user"
+        :highest="highest"
+        :secondHighest="secondHighest"
+      ></user-card>
+    </v-flex>
+  </v-layout>
 </template>
 
 <script>
+import UserCard from "@/components/UserCard.vue";
 export default {
   name: "home",
+  components: { UserCard },
   data() {
     return {
-      users: [
-        {
-          name: null,
-          count: null
-        },
-        {
-          name: null,
-          count: null
-        }
-      ]
+      users: []
     };
   },
   watch: {
     "$route.params": {
       immediate: true,
       handler(val) {
-        this.users[0].name = val.user1;
-        this.users[0].count = null;
-        this.users[1].name = val.user2;
-        this.users[1].count = null;
-        this.updateUsers();
+        this.users = [];
+        Object.keys(val).map(key => {
+          var i = parseInt(key.replace("user", "")) - 1;
+          this.users[i] = {};
+          this.users[i].name = val[key];
+          this.users[i].count = null;
+        });
+        if (this.users.length) this.updateUsers();
       }
     }
   },
@@ -39,6 +40,16 @@ export default {
       if (process.env.NODE_ENV === "development")
         return "http://localhost:8010/proxy";
       return "/untappd";
+    },
+    highest() {
+      return Math.max(
+        ...this.users.map(user => parseInt(user.unique.replace(",", "")))
+      );
+    },
+    secondHighest() {
+      var arr = this.users.map(user => parseInt(user.unique.replace(",", "")));
+      arr.splice(arr.indexOf(this.highest), 1);
+      return Math.max.apply(null, arr);
     }
   },
   methods: {
@@ -52,9 +63,16 @@ export default {
           .then(html => {
             let parser = new DOMParser();
             let doc = parser.parseFromString(html, "text/html");
-            let unique = doc.querySelector(".stats > a:nth-child(2) > span")
-              .innerText;
-            this.users[i].count = unique;
+            let fields = {
+              name: user.name,
+              fullName: doc
+                .querySelector(".info > h1")
+                .innerText.replace(/\r?\n|\r/g, ""),
+              avatar: doc.querySelector(".user-avatar img").src,
+              unique: doc.querySelector(".stats > a:nth-child(2) > span")
+                .innerText
+            };
+            this.$set(this.users, i, fields);
           })
           .catch(function(err) {
             console.log("Failed to fetch page: ", err);

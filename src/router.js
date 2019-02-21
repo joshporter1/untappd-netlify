@@ -12,6 +12,16 @@ export default new Router({
       component: Home
     },
     {
+      path: "/:user1/:user2/:user3",
+      name: "compare",
+      component: Home
+    },
+    {
+      path: "/:user1/:user2/:user3/:user4",
+      name: "compare",
+      component: Home
+    },
+    {
       path: "/",
       name: "home",
       component: Home
